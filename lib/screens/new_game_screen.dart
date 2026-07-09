@@ -229,6 +229,8 @@ class _NewGameScreenState extends State<NewGameScreen> {
 
   Future<void> _createGame() async {
     final name = _nameController.text.trim();
+    // ignore: avoid_print
+    print('DEBUG _createGame name="$name"');
     if (name.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -264,6 +266,8 @@ class _NewGameScreenState extends State<NewGameScreen> {
     final matchBox = context.read<Box<GameMatch>>();
     final gamesProvider = context.read<GamesProvider>();
     final navigator = Navigator.of(context);
+    // ignore: avoid_print
+    print('DEBUG about to write settings');
 
     await settingsBox.put(
       gameId,
@@ -277,8 +281,12 @@ class _NewGameScreenState extends State<NewGameScreen> {
         participants: participants,
       ),
     );
+    // ignore: avoid_print
+    print('DEBUG wrote settings, about to write match');
 
     await matchBox.put(gameId, GameMatch(gameId: gameId, name: name, players: matchPlayers));
+    // ignore: avoid_print
+    print('DEBUG wrote match, about to createGame');
 
     gamesProvider.createGame(
       id: gameId,
@@ -296,6 +304,8 @@ class _NewGameScreenState extends State<NewGameScreen> {
           PlayerScore(id: f.id, name: f.name, score: 0, avatarColor: f.avatarColor),
       ],
     );
+    // ignore: avoid_print
+    print('DEBUG createGame done, mounted=$mounted, about to navigate');
 
     if (!mounted) return;
     navigator.pushReplacement(

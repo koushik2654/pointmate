@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(flutter --version)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git fetch *)",
+      "Bash(git stash *)",
+      "Bash(git push *)"
     ]
   }
 }

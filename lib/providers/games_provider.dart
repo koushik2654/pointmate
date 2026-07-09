@@ -9,7 +9,7 @@ import '../models/game_session.dart';
 /// Holds the games/activity state shown on the Home screen.
 ///
 /// Seeded with sample data for now; a later change will replace [_activeGames]
-/// and [_totalGamesPlayed] with values loaded from persistence. Player scores
+/// with values loaded from persistence. Player scores and [totalGamesPlayed]
 /// are always resolved live against [_matchBox] so rounds recorded on a
 /// game's dashboard show up here immediately.
 class GamesProvider extends ChangeNotifier {
@@ -17,18 +17,17 @@ class GamesProvider extends ChangeNotifier {
     : _matchBox = matchBox,
       _settingsBox = settingsBox,
       _matchListenable = matchBox.listenable(),
-      _activeGames = List<GameSession>.from(_sampleGames),
-      _totalGamesPlayed = 24 {
+      _activeGames = List<GameSession>.from(_sampleGames) {
     _matchListenable.addListener(_onMatchesChanged);
   }
 
   final Box<GameMatch> _matchBox;
   final Box<GameSettings> _settingsBox;
   final ValueListenable<Box<GameMatch>> _matchListenable;
-  final int _totalGamesPlayed;
   final List<GameSession> _activeGames;
 
-  int get totalGamesPlayed => _totalGamesPlayed;
+  /// Number of games that have had at least one round recorded.
+  int get totalGamesPlayed => _matchBox.values.where((match) => match.currentRound > 0).length;
 
   List<GameSession> get activeGames =>
       List.unmodifiable(_activeGames.map(_withLiveScores));
