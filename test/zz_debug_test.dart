@@ -9,7 +9,7 @@ import 'package:pointmate/main.dart';
 
 void main() {
   setUpAll(() async {
-    Hive.init(Directory.systemTemp.createTempSync('pointmate_debug4').path);
+    Hive.init(Directory.systemTemp.createTempSync('pointmate_debug5').path);
     registerHiveAdapters();
     await openHiveBoxes();
   });
@@ -34,6 +34,8 @@ void main() {
 
     await tester.runAsync(() async {
       await tester.tap(find.text('Create Game'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
     });
     await tester.pumpAndSettle();
 

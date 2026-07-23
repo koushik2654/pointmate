@@ -6,20 +6,31 @@ import '../theme/app_theme.dart';
 /// the Home screen and any screen pushed on top of it that should keep the
 /// same app-level chrome.
 class AppHeader extends StatelessWidget {
-  const AppHeader({super.key, this.onBack, this.onSettings});
+  const AppHeader({
+    super.key,
+    this.onBack,
+    this.onSettings,
+    this.showBack = true,
+    this.showSettings = true,
+  });
 
   final VoidCallback? onBack;
   final VoidCallback? onSettings;
+  final bool showBack;
+  final bool showSettings;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        IconButton(
-          onPressed: onBack ?? () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-        ),
+        if (showBack)
+          IconButton(
+            onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          )
+        else
+          const SizedBox(width: 48),
         const Text(
           'PointMate',
           style: TextStyle(
@@ -28,10 +39,13 @@ class AppHeader extends StatelessWidget {
             color: AppColors.primary,
           ),
         ),
-        IconButton(
-          onPressed: onSettings ?? () {},
-          icon: const Icon(Icons.settings_outlined, color: AppColors.textPrimary),
-        ),
+        if (showSettings)
+          IconButton(
+            onPressed: onSettings ?? () {},
+            icon: const Icon(Icons.settings_outlined, color: AppColors.textPrimary),
+          )
+        else
+          const SizedBox(width: 48),
       ],
     );
   }

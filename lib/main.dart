@@ -1,7 +1,6 @@
-flutimport 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
-
 import 'data/hive_boxes.dart';
 import 'data/models/game_match.dart';
 import 'data/models/game_settings.dart';

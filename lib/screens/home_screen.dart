@@ -30,7 +30,7 @@ class HomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const AppHeader(),
+                        const AppHeader(showBack: false, showSettings: false),
                         const SizedBox(height: 16),
                         const AppSearchBar(),
                         const SizedBox(height: 20),

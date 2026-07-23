@@ -120,40 +120,40 @@ class _GameDashboardBody extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.cardMuted,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Progression',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Icon(Icons.show_chart_rounded, color: AppColors.textSecondary),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (topTwo.length >= 2)
-                    ProgressionChart(
-                      leaderSeries: _seriesFor(players, topTwo[0].id),
-                      runnerUpSeries: _seriesFor(players, topTwo[1].id),
-                      roundLabels: List.generate(provider.currentRound, (i) => 'R${i + 1}'),
-                    ),
-                ],
-              ),
-            ),
+            // const SizedBox(height: 20),
+            // Container(
+            //   padding: const EdgeInsets.all(16),
+            //   decoration: BoxDecoration(
+            //     color: AppColors.cardMuted,
+            //     borderRadius: BorderRadius.circular(20),
+            //   ),
+            //   child: Column(
+            //     crossAxisAlignment: CrossAxisAlignment.start,
+            //     children: [
+            //       const Row(
+            //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //         children: [
+            //           Text(
+            //             'Progression',
+            //             style: TextStyle(
+            //               fontSize: 17,
+            //               fontWeight: FontWeight.w700,
+            //               color: AppColors.textPrimary,
+            //             ),
+            //           ),
+            //           Icon(Icons.show_chart_rounded, color: AppColors.textSecondary),
+            //         ],
+            //       ),
+            //       const SizedBox(height: 12),
+            //       if (topTwo.length >= 2)
+            //         ProgressionChart(
+            //           leaderSeries: _seriesFor(players, topTwo[0].id),
+            //           runnerUpSeries: _seriesFor(players, topTwo[1].id),
+            //           roundLabels: List.generate(provider.currentRound, (i) => 'R${i + 1}'),
+            //         ),
+            //     ],
+            //   ),
+            // ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
