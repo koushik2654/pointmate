@@ -6,6 +6,14 @@ import 'package:hive/hive.dart';
 
 import 'package:pointmate/data/hive_boxes.dart';
 import 'package:pointmate/main.dart';
+import 'package:pointmate/widgets/total_activity_card.dart';
+
+import 'support/pump_until.dart';
+
+/// Scopes to the Total Activity card's own count text, since a created
+/// game's "You" score of 0 can otherwise collide with the same digit.
+Finder _totalActivityCount(String value) =>
+    find.descendant(of: find.byType(TotalActivityCard), matching: find.text(value));
 
 void main() {
   setUpAll(() async {
@@ -23,20 +31,10 @@ void main() {
 
     await tester.pumpWidget(const PointMateApp());
 
-    expect(find.text('0'), findsOneWidget, reason: 'no rounds recorded yet on a fresh install');
-
-    await tester.tap(find.text('Poker Night'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('ROUND 5'), findsOneWidget, reason: 'sample game seeds 5 rounds on first open');
-
-    await tester.tap(find.byIcon(Icons.arrow_back));
-    await tester.pumpAndSettle();
-
     expect(
-      find.text('1'),
+      _totalActivityCount('0'),
       findsOneWidget,
-      reason: 'opening a sample game seeds a played match, counting it as played',
+      reason: 'no rounds recorded yet on a fresh install',
     );
 
     await tester.tap(find.byIcon(Icons.add));
@@ -45,14 +43,18 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'Fresh Game');
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Create Game'));
+    await tapAndWaitUntil(
+      tester,
+      find.text('Create Game'),
+      () => find.text('New Game').evaluate().isEmpty,
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.arrow_back));
     await tester.pumpAndSettle();
 
     expect(
-      find.text('1'),
+      _totalActivityCount('0'),
       findsOneWidget,
       reason: 'creating a game with no rounds yet should not count as played',
     );
@@ -62,14 +64,19 @@ void main() {
 
     await tester.tap(find.text('Add New Round'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Save'));
+
+    await tapAndWaitUntil(
+      tester,
+      find.text('Save'),
+      () => find.text('Add New Round').evaluate().length == 1,
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.arrow_back));
     await tester.pumpAndSettle();
 
     expect(
-      find.text('2'),
+      _totalActivityCount('1'),
       findsOneWidget,
       reason: 'recording a round on the new game should now count it as played',
     );

@@ -1,10 +1,13 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'package:pointmate/data/hive_boxes.dart';
 import 'package:pointmate/main.dart';
+
+import 'support/pump_until.dart';
 
 void main() {
   setUpAll(() async {
@@ -13,24 +16,35 @@ void main() {
     await openHiveBoxes();
   });
 
-  testWidgets('Home screen renders title and active games', (WidgetTester tester) async {
-    await tester.pumpWidget(const PointMateApp());
-
-    expect(find.text('PointMate'), findsOneWidget);
-    expect(find.text('Active Games'), findsOneWidget);
-    expect(find.text('Poker Night'), findsOneWidget);
-  });
-
-  testWidgets('Tapping a game card opens its dashboard with a sorted leaderboard', (
+  testWidgets('Home screen renders title and the active games section', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const PointMateApp());
 
-    await tester.tap(find.text('Poker Night'));
+    expect(find.text('PointMate'), findsOneWidget);
+    expect(find.text('Active Games'), findsOneWidget);
+  });
+
+  testWidgets('Creating a game shows it on Home and opens its dashboard with a leaderboard', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const PointMateApp());
+
+    await tester.tap(find.byIcon(Icons.add));
     await tester.pumpAndSettle();
 
-    expect(find.text('ROUND 5'), findsOneWidget);
-    expect(find.text('Alex'), findsOneWidget);
-    expect(find.text('4,250'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, 'Board Game Night');
+    await tester.pumpAndSettle();
+
+    await tapAndWaitUntil(
+      tester,
+      find.text('Create Game'),
+      () => find.text('New Game').evaluate().isEmpty,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Board Game Night'), findsOneWidget);
+    expect(find.text('ROUND 0'), findsOneWidget);
+    expect(find.text('You'), findsOneWidget);
   });
 }

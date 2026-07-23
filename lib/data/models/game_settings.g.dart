@@ -24,13 +24,14 @@ class GameSettingsAdapter extends TypeAdapter<GameSettings> {
       targetScore: fields[4] as int,
       roundMultiplier: fields[5] as RoundMultiplier,
       participants: (fields[6] as List).cast<ParticipantEntry>(),
+      category: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, GameSettings obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.gameId)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class GameSettingsAdapter extends TypeAdapter<GameSettings> {
       ..writeByte(5)
       ..write(obj.roundMultiplier)
       ..writeByte(6)
-      ..write(obj.participants);
+      ..write(obj.participants)
+      ..writeByte(7)
+      ..write(obj.category);
   }
 
   @override

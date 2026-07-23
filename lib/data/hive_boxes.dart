@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'models/friend.dart';
 import 'models/game_match.dart';
 import 'models/game_settings.dart';
 import 'models/match_player.dart';
@@ -13,6 +14,7 @@ class HiveBoxes {
 
   static const String gameSettings = 'game_settings';
   static const String gameMatches = 'game_matches';
+  static const String friends = 'friends';
 }
 
 void registerHiveAdapters() {
@@ -22,11 +24,13 @@ void registerHiveAdapters() {
   Hive.registerAdapter(ParticipantEntryAdapter());
   Hive.registerAdapter(MatchPlayerAdapter());
   Hive.registerAdapter(GameMatchAdapter());
+  Hive.registerAdapter(FriendAdapter());
 }
 
 Future<void> openHiveBoxes() async {
   await Hive.openBox<GameSettings>(HiveBoxes.gameSettings);
   await Hive.openBox<GameMatch>(HiveBoxes.gameMatches);
+  await Hive.openBox<Friend>(HiveBoxes.friends);
 }
 
 /// Registers all Hive adapters and opens the boxes the app needs.

@@ -17,6 +17,7 @@ class GameSettings extends HiveObject {
     required this.targetScore,
     required this.roundMultiplier,
     required this.participants,
+    this.category,
   });
 
   @HiveField(0)
@@ -40,6 +41,12 @@ class GameSettings extends HiveObject {
   @HiveField(6)
   List<ParticipantEntry> participants;
 
+  /// The category chip picked when creating this game (e.g. "Rummy"), used
+  /// to pick its icon on Home. Null for games created before this field
+  /// existed.
+  @HiveField(7)
+  String? category;
+
   factory GameSettings.defaults(String gameId) {
     return GameSettings(
       gameId: gameId,
@@ -48,11 +55,7 @@ class GameSettings extends HiveObject {
       enableTimer: false,
       targetScore: 500,
       roundMultiplier: RoundMultiplier.x1,
-      participants: [
-        ParticipantEntry(id: 'alex', name: 'Alex', avatarColorValue: 0xFFBEE3F8),
-        ParticipantEntry(id: 'jordan', name: 'Jordan', avatarColorValue: 0xFFFBD5D5),
-        ParticipantEntry(id: 'sam', name: 'Sam', avatarColorValue: 0xFFC6F0D3),
-      ],
+      participants: [],
     );
   }
 }

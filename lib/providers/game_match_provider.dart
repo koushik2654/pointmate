@@ -27,6 +27,16 @@ class GameMatchProvider extends ChangeNotifier {
 
   int get currentRound => _match.currentRound;
 
+  bool get isFinished => _match.isFinished;
+
+  /// Marks the game as finished: it drops off the Home screen's active
+  /// list and surfaces on the History tab instead.
+  Future<void> finishGame() async {
+    _match.isFinished = true;
+    await _box.put(_gameId, _match);
+    notifyListeners();
+  }
+
   List<MatchPlayerView> get leaderboard {
     final sorted = _match.leaderboard;
     return [for (final p in sorted) MatchPlayerView(id: p.id, name: p.name, total: p.total)];

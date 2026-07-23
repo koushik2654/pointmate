@@ -1,44 +1,38 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'game_match.dart';
+part of 'friend.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class GameMatchAdapter extends TypeAdapter<GameMatch> {
+class FriendAdapter extends TypeAdapter<Friend> {
   @override
-  final int typeId = 5;
+  final int typeId = 6;
 
   @override
-  GameMatch read(BinaryReader reader) {
+  Friend read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return GameMatch(
-      gameId: fields[0] as String,
+    return Friend(
+      id: fields[0] as String,
       name: fields[1] as String,
-      players: (fields[2] as List).cast<MatchPlayer>(),
-      isFinished: fields[3] as bool,
-      createdAt: fields[4] as DateTime?,
+      avatarColorValue: fields[2] as int,
     );
   }
 
   @override
-  void write(BinaryWriter writer, GameMatch obj) {
+  void write(BinaryWriter writer, Friend obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(3)
       ..writeByte(0)
-      ..write(obj.gameId)
+      ..write(obj.id)
       ..writeByte(1)
       ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.players)
-      ..writeByte(3)
-      ..write(obj.isFinished)
-      ..writeByte(4)
-      ..write(obj.createdAt);
+      ..write(obj.avatarColorValue);
   }
 
   @override
@@ -47,7 +41,7 @@ class GameMatchAdapter extends TypeAdapter<GameMatch> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is GameMatchAdapter &&
+      other is FriendAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

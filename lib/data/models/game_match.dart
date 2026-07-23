@@ -9,7 +9,13 @@ part 'game_match.g.dart';
 /// so playing a game doesn't require its rules to be finalized first.
 @HiveType(typeId: 5)
 class GameMatch extends HiveObject {
-  GameMatch({required this.gameId, required this.name, required this.players});
+  GameMatch({
+    required this.gameId,
+    required this.name,
+    required this.players,
+    this.isFinished = false,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   @HiveField(0)
   String gameId;
@@ -20,35 +26,23 @@ class GameMatch extends HiveObject {
   @HiveField(2)
   List<MatchPlayer> players;
 
+  /// Whether the player has explicitly finished this game. Finished games
+  /// drop off the Home screen's active list and surface on the History tab
+  /// instead.
+  @HiveField(3)
+  bool isFinished;
+
+  /// When this game was created. Defaults to the construction time if not
+  /// supplied, so every newly created game is stamped automatically.
+  @HiveField(4)
+  DateTime createdAt;
+
   int get currentRound => players.isEmpty ? 0 : players.first.roundScores.length;
 
   List<MatchPlayer> get leaderboard =>
       [...players]..sort((a, b) => b.total.compareTo(a.total));
 
   factory GameMatch.defaults(String gameId, String name) {
-    return GameMatch(
-      gameId: gameId,
-      name: name,
-      players: [
-        MatchPlayer(
-          id: 'alex',
-          name: 'Alex',
-          avatarColorValue: 0xFFBEE3F8,
-          roundScores: const [500, 1400, 2100, 3200, 4250],
-        ),
-        MatchPlayer(
-          id: 'sarah',
-          name: 'Sarah',
-          avatarColorValue: 0xFFFBD5D5,
-          roundScores: const [300, 900, 1500, 2200, 3100],
-        ),
-        MatchPlayer(
-          id: 'mike',
-          name: 'Mike',
-          avatarColorValue: 0xFFC6F0D3,
-          roundScores: const [200, 800, 1400, 2000, 2850],
-        ),
-      ],
-    );
+    return GameMatch(gameId: gameId, name: name, players: []);
   }
 }

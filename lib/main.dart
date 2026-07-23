@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'data/hive_boxes.dart';
+import 'data/models/friend.dart';
 import 'data/models/game_match.dart';
 import 'data/models/game_settings.dart';
 import 'providers/games_provider.dart';
@@ -26,6 +27,9 @@ class PointMateApp extends StatelessWidget {
         ),
         Provider<Box<GameMatch>>.value(
           value: Hive.box<GameMatch>(HiveBoxes.gameMatches),
+        ),
+        Provider<Box<Friend>>.value(
+          value: Hive.box<Friend>(HiveBoxes.friends),
         ),
         ChangeNotifierProvider(
           create: (ctx) => GamesProvider(

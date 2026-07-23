@@ -56,4 +56,20 @@ void main() {
     expect(rounds.last.roundNumber, 4);
     expect(rounds.last.totals['alex'], 3750);
   });
+
+  test('finishGame marks the match finished and persists it', () async {
+    final box = Hive.box<GameMatch>(HiveBoxes.gameMatches);
+    final provider = GameMatchProvider(
+      box: box,
+      gameId: 'finish-game-logic-test',
+      gameName: 'Finish Game Logic Test',
+    );
+
+    expect(provider.isFinished, isFalse);
+
+    await provider.finishGame();
+
+    expect(provider.isFinished, isTrue);
+    expect(box.get('finish-game-logic-test')!.isFinished, isTrue);
+  });
 }

@@ -12,12 +12,14 @@ class AppHeader extends StatelessWidget {
     this.onSettings,
     this.showBack = true,
     this.showSettings = true,
+    this.title = 'PointMate',
   });
 
   final VoidCallback? onBack;
   final VoidCallback? onSettings;
   final bool showBack;
   final bool showSettings;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +33,9 @@ class AppHeader extends StatelessWidget {
           )
         else
           const SizedBox(width: 48),
-        const Text(
-          'PointMate',
-          style: TextStyle(
+        Text(
+          title,
+          style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: AppColors.primary,

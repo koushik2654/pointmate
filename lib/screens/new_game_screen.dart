@@ -4,18 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
+import '../data/models/friend.dart';
 import '../data/models/game_match.dart';
 import '../data/models/game_settings.dart';
 import '../data/models/match_player.dart';
 import '../data/models/participant_entry.dart';
 import '../data/models/round_multiplier.dart';
 import '../data/models/winning_condition.dart';
-import '../models/game_session.dart';
-import '../providers/games_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_snackbar.dart';
 import 'game/game_dashboard_screen.dart';
 
-const List<String> _kCategories = ['Board Game', 'Card Game', 'Sports'];
+const List<String> _kCategories = ['Board Game', 'Rummy', 'Spades', 'Lowest Count', 'Shuttle'];
 
 const List<Color> _kCustomAvatarPalette = [
   Color(0xFFB9A6E0),
@@ -29,19 +29,13 @@ const List<Color> _kCustomAvatarPalette = [
 ];
 
 class _RosterFriend {
-  _RosterFriend({
-    required this.id,
-    required this.name,
-    this.subtitle,
-    Color? avatarColor,
-    this.isCustom = false,
-  }) : avatarColor = avatarColor ?? AppColors.cardMuted;
+  _RosterFriend({required this.id, required this.name, this.subtitle, Color? avatarColor})
+    : avatarColor = avatarColor ?? AppColors.cardMuted;
 
   final String id;
   final String name;
   final String? subtitle;
   final Color avatarColor;
-  final bool isCustom;
 
   String get firstName => name.split(' ').first;
 
@@ -70,20 +64,23 @@ class _NewGameScreenState extends State<NewGameScreen> {
   String? _selectedCategory;
   String _query = '';
 
-  final List<_RosterFriend> _roster = [
-    _RosterFriend(id: 'john-davis', name: 'John Davis', avatarColor: const Color(0xFFE8A0A0)),
-    _RosterFriend(id: 'sarah-king', name: 'Sarah King', avatarColor: const Color(0xFFB9A6E0)),
-    _RosterFriend(id: 'alex-morgan', name: 'Alex Morgan', avatarColor: const Color(0xFF7FCDBB)),
-  ];
+  final List<_RosterFriend> _roster = [];
 
-  final List<_RosterFriend> _available = [
-    _RosterFriend(
-      id: 'mike-johnson',
-      name: 'Mike Johnson',
-      subtitle: 'Last played: 2 days ago',
-    ),
-    _RosterFriend(id: 'emma-lee', name: 'Emma Lee', subtitle: 'New Friend'),
-  ];
+  final List<_RosterFriend> _available = [];
+
+  @override
+  void initState() {
+    super.initState();
+    final friendsBox = context.read<Box<Friend>>();
+    _available.addAll([
+      for (final friend in friendsBox.values)
+        _RosterFriend(
+          id: friend.id,
+          name: friend.name,
+          avatarColor: Color(friend.avatarColorValue),
+        ),
+    ]);
+  }
 
   @override
   void dispose() {
@@ -108,7 +105,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
   void _removeFromRoster(_RosterFriend friend) {
     setState(() {
       _roster.remove(friend);
-      if (!friend.isCustom) _available.add(friend);
+      _available.add(friend);
     });
   }
 
@@ -207,50 +204,31 @@ class _NewGameScreenState extends State<NewGameScreen> {
             id: 'custom-${DateTime.now().microsecondsSinceEpoch}',
             name: result['name']! as String,
             avatarColor: result['color']! as Color,
-            isCustom: true,
           ),
         );
       });
     }
   }
 
-  IconData get _categoryIcon {
-    switch (_selectedCategory) {
-      case 'Board Game':
-        return Icons.hexagon_outlined;
-      case 'Card Game':
-        return Icons.style_rounded;
-      case 'Sports':
-        return Icons.sports_basketball_rounded;
-      default:
-        return Icons.style_rounded;
-    }
-  }
-
   Future<void> _createGame() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter a game name')));
+      AppSnackBar.showError(context, 'Please enter a game name');
+      return;
+    }
+    if (_roster.isEmpty) {
+      AppSnackBar.showError(context, 'Add at least one player');
       return;
     }
 
     final gameId = 'game-${DateTime.now().microsecondsSinceEpoch}';
 
     final participants = [
-      ParticipantEntry(id: 'you', name: 'You', avatarColorValue: AppColors.primary.toARGB32()),
       for (final f in _roster)
         ParticipantEntry(id: f.id, name: f.name, avatarColorValue: f.avatarColor.toARGB32()),
     ];
 
     final matchPlayers = [
-      MatchPlayer(
-        id: 'you',
-        name: 'You',
-        avatarColorValue: AppColors.primary.toARGB32(),
-        roundScores: const [],
-      ),
       for (final f in _roster)
         MatchPlayer(
           id: f.id,
@@ -262,7 +240,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
 
     final settingsBox = context.read<Box<GameSettings>>();
     final matchBox = context.read<Box<GameMatch>>();
-    final gamesProvider = context.read<GamesProvider>();
+    final friendsBox = context.read<Box<Friend>>();
     final navigator = Navigator.of(context);
 
     await settingsBox.put(
@@ -275,27 +253,21 @@ class _NewGameScreenState extends State<NewGameScreen> {
         targetScore: 500,
         roundMultiplier: RoundMultiplier.x1,
         participants: participants,
+        category: _selectedCategory,
       ),
     );
 
+    // GamesProvider watches this box, so the game shows up on Home as soon
+    // as this is written — no separate "add to active games" call needed.
     await matchBox.put(gameId, GameMatch(gameId: gameId, name: name, players: matchPlayers));
 
-    gamesProvider.createGame(
-      id: gameId,
-      name: name,
-      icon: _categoryIcon,
-      players: [
-        PlayerScore(
-          id: 'you',
-          name: 'You',
-          score: 0,
-          isCurrentUser: true,
-          avatarColor: AppColors.primary,
-        ),
-        for (final f in _roster)
-          PlayerScore(id: f.id, name: f.name, score: 0, avatarColor: f.avatarColor),
-      ],
-    );
+    // Remember this game's roster so they show up as friends next time.
+    for (final f in _roster) {
+      await friendsBox.put(
+        f.id,
+        Friend(id: f.id, name: f.name, avatarColorValue: f.avatarColor.toARGB32()),
+      );
+    }
 
     if (!mounted) return;
     navigator.pushReplacement(
@@ -356,19 +328,23 @@ class _NewGameScreenState extends State<NewGameScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (final category in _kCategories)
-                _CategoryChip(
+          SizedBox(
+            height: 48,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _kCategories.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final category = _kCategories[index];
+                return _CategoryChip(
                   label: category,
                   selected: _selectedCategory == category,
                   onTap: () => setState(
                     () => _selectedCategory = _selectedCategory == category ? null : category,
                   ),
-                ),
-            ],
+                );
+              },
+            ),
           ),
           const SizedBox(height: 28),
           Row(
@@ -444,14 +420,6 @@ class _NewGameScreenState extends State<NewGameScreen> {
                 for (final friend in _filteredAvailable) ...[
                   const Divider(height: 1, color: AppColors.inputBorder),
                   _FriendListTile(friend: friend, onAdd: () => _addFriend(friend)),
-                ],
-                for (final friend in _roster) ...[
-                  const Divider(height: 1, color: AppColors.inputBorder),
-                  _RosterListRow(
-                    key: ValueKey(friend.id),
-                    friend: friend,
-                    onDelete: () => _removeFromRoster(friend),
-                  ),
                 ],
                 const Divider(height: 1, color: AppColors.inputBorder),
                 InkWell(
@@ -708,86 +676,3 @@ class _FriendListTile extends StatelessWidget {
   }
 }
 
-/// A roster member row that reveals a delete button when swiped left.
-class _RosterListRow extends StatefulWidget {
-  const _RosterListRow({super.key, required this.friend, required this.onDelete});
-
-  final _RosterFriend friend;
-  final VoidCallback onDelete;
-
-  @override
-  State<_RosterListRow> createState() => _RosterListRowState();
-}
-
-class _RosterListRowState extends State<_RosterListRow> {
-  static const double _actionWidth = 64;
-
-  double _dragExtent = 0;
-
-  void _handleDragUpdate(DragUpdateDetails details) {
-    setState(() {
-      _dragExtent = (_dragExtent + details.delta.dx).clamp(-_actionWidth, 0.0);
-    });
-  }
-
-  void _handleDragEnd(DragEndDetails details) {
-    setState(() {
-      _dragExtent = _dragExtent < -_actionWidth / 2 ? -_actionWidth : 0;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.centerRight,
-      children: [
-        Positioned(
-          top: 0,
-          bottom: 0,
-          right: 0,
-          width: _actionWidth,
-          child: InkWell(
-            onTap: widget.onDelete,
-            child: const Center(
-              child: Icon(Icons.remove_circle_rounded, color: AppColors.negative, size: 28),
-            ),
-          ),
-        ),
-        GestureDetector(
-          onHorizontalDragUpdate: _handleDragUpdate,
-          onHorizontalDragEnd: _handleDragEnd,
-          child: Transform.translate(
-            offset: Offset(_dragExtent, 0),
-            child: Container(
-              color: AppColors.background,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: widget.friend.avatarColor,
-                    child: Text(
-                      widget.friend.initials,
-                      style: TextStyle(fontWeight: FontWeight.w700, color: widget.friend.textColor),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(
-                      widget.friend.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
