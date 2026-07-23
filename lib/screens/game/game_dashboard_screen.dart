@@ -52,7 +52,10 @@ class _GameDashboardBody extends StatelessWidget {
           children: [
             AppHeader(
               onSettings: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => GameNavScaffold(gameId: gameId)),
+                MaterialPageRoute(
+                  builder: (_) =>
+                      GameNavScaffold(gameId: gameId, gameName: provider.match.name),
+                ),
               ),
             ),
             const SizedBox(height: 20),

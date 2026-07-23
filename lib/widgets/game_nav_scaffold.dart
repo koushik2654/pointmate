@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
+import '../data/models/game_match.dart';
 import '../data/models/game_settings.dart';
+import '../providers/game_match_provider.dart';
 import '../providers/game_settings_provider.dart';
 import '../screens/game/game_account_tab_screen.dart';
 import '../screens/game/game_history_tab_screen.dart';
@@ -13,9 +15,10 @@ import '../theme/app_theme.dart';
 /// Hosts the per-game destinations (rules, round history, players, account)
 /// once the user has entered a specific game, behind their own bottom nav.
 class GameNavScaffold extends StatefulWidget {
-  const GameNavScaffold({super.key, required this.gameId});
+  const GameNavScaffold({super.key, required this.gameId, required this.gameName});
 
   final String gameId;
+  final String gameName;
 
   @override
   State<GameNavScaffold> createState() => _GameNavScaffoldState();
@@ -40,11 +43,22 @@ class _GameNavScaffoldState extends State<GameNavScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (ctx) => GameSettingsProvider(
-        box: ctx.read<Box<GameSettings>>(),
-        gameId: widget.gameId,
-      ),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (ctx) => GameSettingsProvider(
+            box: ctx.read<Box<GameSettings>>(),
+            gameId: widget.gameId,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => GameMatchProvider(
+            box: ctx.read<Box<GameMatch>>(),
+            gameId: widget.gameId,
+            gameName: widget.gameName,
+          ),
+        ),
+      ],
       child: Scaffold(
         body: IndexedStack(index: _index, children: _screens),
         bottomNavigationBar: SafeArea(
