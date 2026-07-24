@@ -3,7 +3,6 @@ import 'package:hive/hive.dart';
 
 import '../data/models/game_settings.dart';
 import '../data/models/participant_entry.dart';
-import '../data/models/round_multiplier.dart';
 import '../data/models/winning_condition.dart';
 
 /// Loads/persists a single game's [GameSettings] to/from its Hive box.
@@ -51,20 +50,20 @@ class GameSettingsProvider extends ChangeNotifier {
     await _persist();
   }
 
-  Future<void> setRoundMultiplier(RoundMultiplier value) async {
-    _settings.roundMultiplier = value;
+  Future<void> setInvertScoreColors(bool value) async {
+    _settings.invertScoreColors = value;
     await _persist();
   }
 
-  Future<void> addParticipant(String name) async {
+  Future<void> addParticipant(
+    String name, {
+    required String id,
+    int avatarColorValue = 0xFFD9D3E3,
+  }) async {
     if (name.trim().isEmpty) return;
     _settings.participants = [
       ..._settings.participants,
-      ParticipantEntry(
-        id: '${DateTime.now().microsecondsSinceEpoch}',
-        name: name.trim(),
-        avatarColorValue: 0xFFD9D3E3,
-      ),
+      ParticipantEntry(id: id, name: name.trim(), avatarColorValue: avatarColorValue),
     ];
     await _persist();
   }

@@ -37,6 +37,32 @@ class GameMatchProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Adds a new player to the live match. Their score for every round
+  /// already played is backfilled to zero so the scoreboard stays aligned.
+  Future<void> addPlayer({
+    required String id,
+    required String name,
+    required int avatarColorValue,
+  }) async {
+    _match.players = [
+      ..._match.players,
+      MatchPlayer(
+        id: id,
+        name: name,
+        avatarColorValue: avatarColorValue,
+        roundScores: List.filled(currentRound, 0),
+      ),
+    ];
+    await _box.put(_gameId, _match);
+    notifyListeners();
+  }
+
+  Future<void> removePlayer(String id) async {
+    _match.players = _match.players.where((p) => p.id != id).toList();
+    await _box.put(_gameId, _match);
+    notifyListeners();
+  }
+
   List<MatchPlayerView> get leaderboard {
     final sorted = _match.leaderboard;
     return [for (final p in sorted) MatchPlayerView(id: p.id, name: p.name, total: p.total)];

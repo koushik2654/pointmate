@@ -20,6 +20,9 @@ class HiveBoxes {
 void registerHiveAdapters() {
   Hive.registerAdapter(GameSettingsAdapter());
   Hive.registerAdapter(WinningConditionAdapter());
+  // GameSettings no longer has a roundMultiplier field, but this stays
+  // registered so existing saved games (which still have that field written
+  // to disk) can still be decoded — removing it would break loading them.
   Hive.registerAdapter(RoundMultiplierAdapter());
   Hive.registerAdapter(ParticipantEntryAdapter());
   Hive.registerAdapter(MatchPlayerAdapter());

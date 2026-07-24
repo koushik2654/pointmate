@@ -22,9 +22,9 @@ class GameSettingsAdapter extends TypeAdapter<GameSettings> {
       allowNegativeScores: fields[2] as bool,
       enableTimer: fields[3] as bool,
       targetScore: fields[4] as int,
-      roundMultiplier: fields[5] as RoundMultiplier,
       participants: (fields[6] as List).cast<ParticipantEntry>(),
       category: fields[7] as String?,
+      invertScoreColors: fields[8] as bool? ?? false,
     );
   }
 
@@ -42,12 +42,12 @@ class GameSettingsAdapter extends TypeAdapter<GameSettings> {
       ..write(obj.enableTimer)
       ..writeByte(4)
       ..write(obj.targetScore)
-      ..writeByte(5)
-      ..write(obj.roundMultiplier)
       ..writeByte(6)
       ..write(obj.participants)
       ..writeByte(7)
-      ..write(obj.category);
+      ..write(obj.category)
+      ..writeByte(8)
+      ..write(obj.invertScoreColors);
   }
 
   @override

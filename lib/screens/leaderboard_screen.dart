@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/games_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/app_header.dart';
+import 'player_games_screen.dart';
 
 /// Ranks players by games won (aggregated by name) across every game
 /// they've played, live as rounds are recorded.
@@ -19,18 +19,16 @@ class LeaderboardScreen extends StatelessWidget {
         child: CustomScrollView(
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
               sliver: SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AppHeader(showBack: false, showSettings: false),
-                    const SizedBox(height: 16),
                     const Text(
                       'Leaderboard',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -76,75 +74,92 @@ class _LeaderboardEntryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isFirst = rank == 1;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isFirst ? AppColors.rankGoldBg : AppColors.cardMuted,
+    return Material(
+      color: isFirst ? AppColors.rankGoldBg : AppColors.cardMuted,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: isFirst ? AppColors.rankGoldCircle : AppColors.rankNeutralCircle,
-            child: isFirst
-                ? const Icon(Icons.star_rounded, color: Colors.white, size: 18)
-                : Text(
-                    '$rank',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PlayerGamesScreen(playerName: entry.name),
           ),
-          const SizedBox(width: 12),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: entry.avatarColor,
-            child: Text(
-              entry.initial,
-              style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  entry.name,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: isFirst
+                    ? AppColors.rankGoldCircle
+                    : AppColors.rankNeutralCircle,
+                child: isFirst
+                    ? const Icon(Icons.star_rounded, color: Colors.white, size: 18)
+                    : Text(
+                        '$rank',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+              ),
+              const SizedBox(width: 12),
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: entry.avatarColor,
+                child: Text(
+                  entry.initial,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${entry.gamesPlayed} game${entry.gamesPlayed == 1 ? '' : 's'} played',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${entry.wins}',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: isFirst ? AppColors.rankGoldFg : AppColors.textPrimary,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${entry.gamesPlayed} game${entry.gamesPlayed == 1 ? '' : 's'} played',
+                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                    ),
+                  ],
                 ),
               ),
-              const Text(
-                'WINS',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${entry.wins}',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: isFirst ? AppColors.rankGoldFg : AppColors.textPrimary,
+                    ),
+                  ),
+                  const Text(
+                    'WINS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

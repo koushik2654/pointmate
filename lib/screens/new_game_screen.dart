@@ -9,9 +9,9 @@ import '../data/models/game_match.dart';
 import '../data/models/game_settings.dart';
 import '../data/models/match_player.dart';
 import '../data/models/participant_entry.dart';
-import '../data/models/round_multiplier.dart';
 import '../data/models/winning_condition.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_form_dialog.dart';
 import '../widgets/app_snackbar.dart';
 import 'game/game_dashboard_screen.dart';
 
@@ -64,6 +64,11 @@ class _NewGameScreenState extends State<NewGameScreen> {
   String? _selectedCategory;
   String _query = '';
 
+  // Tracks whether the current game name was filled in by tapping a
+  // category, so switching categories can keep it in sync — but a name
+  // the user typed themselves is never overwritten.
+  String? _categoryFilledName;
+
   final List<_RosterFriend> _roster = [];
 
   final List<_RosterFriend> _available = [];
@@ -93,6 +98,25 @@ class _NewGameScreenState extends State<NewGameScreen> {
     if (_query.isEmpty) return _available;
     final query = _query.toLowerCase();
     return _available.where((f) => f.name.toLowerCase().contains(query)).toList();
+  }
+
+  void _selectCategory(String category) {
+    setState(() {
+      final wasSelected = _selectedCategory == category;
+      if (wasSelected) {
+        _selectedCategory = null;
+        if (_nameController.text == _categoryFilledName) {
+          _nameController.clear();
+          _categoryFilledName = null;
+        }
+      } else {
+        _selectedCategory = category;
+        if (_nameController.text.isEmpty || _nameController.text == _categoryFilledName) {
+          _nameController.text = category;
+          _categoryFilledName = category;
+        }
+      }
+    });
   }
 
   void _addFriend(_RosterFriend friend) {
@@ -127,8 +151,8 @@ class _NewGameScreenState extends State<NewGameScreen> {
           dialogSetState = setState;
           final canAdd = controller.text.trim().isNotEmpty;
 
-          return AlertDialog(
-            title: const Text('Add Player'),
+          return AppFormDialog(
+            title: 'Add Player',
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,20 +202,13 @@ class _NewGameScreenState extends State<NewGameScreen> {
                 ),
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: canAdd
-                    ? () => Navigator.of(
-                        context,
-                      ).pop({'name': controller.text.trim(), 'color': selectedColor})
-                    : null,
-                child: const Text('Add'),
-              ),
-            ],
+            onCancel: () => Navigator.of(context).pop(),
+            onConfirm: canAdd
+                ? () => Navigator.of(
+                    context,
+                  ).pop({'name': controller.text.trim(), 'color': selectedColor})
+                : null,
+            confirmLabel: 'Add',
           );
         },
       ),
@@ -251,7 +268,6 @@ class _NewGameScreenState extends State<NewGameScreen> {
         allowNegativeScores: true,
         enableTimer: false,
         targetScore: 500,
-        roundMultiplier: RoundMultiplier.x1,
         participants: participants,
         category: _selectedCategory,
       ),
@@ -291,9 +307,13 @@ class _NewGameScreenState extends State<NewGameScreen> {
         ),
         centerTitle: true,
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-        children: [
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                children: [
           const Text(
             'Game Details',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
@@ -339,9 +359,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
                 return _CategoryChip(
                   label: category,
                   selected: _selectedCategory == category,
-                  onTap: () => setState(
-                    () => _selectedCategory = _selectedCategory == category ? null : category,
-                  ),
+                  onTap: () => _selectCategory(category),
                 );
               },
             ),
@@ -448,28 +466,30 @@ class _NewGameScreenState extends State<NewGameScreen> {
               ],
             ),
           ),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: _createGame,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryDark,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              ),
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text(
-                'Create Game',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ],
               ),
             ),
-          ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: _createGame,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryDark,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  ),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: const Text(
+                    'Create Game',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

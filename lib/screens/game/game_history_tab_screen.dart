@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../data/models/match_player.dart';
 import '../../providers/game_match_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/app_confirm_dialog.dart';
+import '../../widgets/app_form_dialog.dart';
 
 /// Lists every round recorded for the current game with each player's
 /// points that round and running total, and lets the user edit or delete
@@ -16,6 +18,7 @@ class GameHistoryTabScreen extends StatelessWidget {
     final provider = context.watch<GameMatchProvider>();
     final players = provider.match.players;
     final rounds = provider.rounds.reversed.toList();
+    final isFinished = provider.isFinished;
 
     return Scaffold(
       appBar: AppBar(
@@ -43,8 +46,10 @@ class GameHistoryTabScreen extends StatelessWidget {
                 return _RoundCard(
                   round: round,
                   players: players,
-                  onEdit: () => _showEditRoundDialog(context, provider, round, players),
-                  onDelete: () => _confirmDeleteRound(context, provider, round),
+                  onEdit: isFinished
+                      ? null
+                      : () => _showEditRoundDialog(context, provider, round, players),
+                  onDelete: isFinished ? null : () => _confirmDeleteRound(context, provider, round),
                 );
               },
             ),
@@ -63,10 +68,11 @@ class GameHistoryTabScreen extends StatelessWidget {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Edit Round ${round.roundNumber}'),
+      builder: (context) => AppFormDialog(
+        title: 'Edit Round ${round.roundNumber}',
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final p in players)
               Padding(
@@ -79,16 +85,9 @@ class GameHistoryTabScreen extends StatelessWidget {
               ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Save'),
-          ),
-        ],
+        onCancel: () => Navigator.of(context).pop(false),
+        onConfirm: () => Navigator.of(context).pop(true),
+        confirmLabel: 'Save',
       ),
     );
 
@@ -105,24 +104,15 @@ class GameHistoryTabScreen extends StatelessWidget {
     GameMatchProvider provider,
     RoundSummary round,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete Round ${round.roundNumber}'),
-        content: const Text(
-          'This round will be removed and every player\'s totals recalculated.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.negative)),
-          ),
-        ],
-      ),
+    final confirmed = await AppConfirmDialog.show(
+      context,
+      icon: Icons.delete_outline_rounded,
+      iconBackgroundColor: AppColors.statusInProgressBg,
+      iconColor: AppColors.negative,
+      title: 'Delete Round ${round.roundNumber}?',
+      message: "This round will be removed and every player's totals recalculated.",
+      confirmLabel: 'Delete',
+      confirmColor: AppColors.negative,
     );
 
     if (confirmed == true) {
@@ -135,14 +125,14 @@ class _RoundCard extends StatelessWidget {
   const _RoundCard({
     required this.round,
     required this.players,
-    required this.onEdit,
-    required this.onDelete,
+    this.onEdit,
+    this.onDelete,
   });
 
   final RoundSummary round;
   final List<MatchPlayer> players;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -169,24 +159,26 @@ class _RoundCard extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    onPressed: onEdit,
-                    visualDensity: VisualDensity.compact,
-                    icon: const Icon(
-                      Icons.edit_outlined,
-                      color: AppColors.textSecondary,
-                      size: 20,
+                  if (onEdit != null)
+                    IconButton(
+                      onPressed: onEdit,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: onDelete,
-                    visualDensity: VisualDensity.compact,
-                    icon: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: AppColors.negative,
-                      size: 20,
+                  if (onDelete != null)
+                    IconButton(
+                      onPressed: onDelete,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: AppColors.negative,
+                        size: 20,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../data/models/game_match.dart';
 import '../providers/games_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/app_header.dart';
+import '../widgets/app_confirm_dialog.dart';
 import 'game/game_dashboard_screen.dart';
 
 /// Lists every game the player has explicitly finished via
@@ -22,18 +22,16 @@ class HistoryScreen extends StatelessWidget {
         child: CustomScrollView(
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
               sliver: SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AppHeader(showBack: false, showSettings: false),
-                    const SizedBox(height: 16),
                     const Text(
                       'History',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -83,25 +81,18 @@ class HistoryScreen extends StatelessWidget {
     GamesProvider games,
     GameMatch match,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Game'),
-        content: Text('Do you want to delete "${match.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.negative)),
-          ),
-        ],
-      ),
+    final confirmed = await AppConfirmDialog.show(
+      context,
+      icon: Icons.delete_outline_rounded,
+      iconBackgroundColor: AppColors.statusInProgressBg,
+      iconColor: AppColors.negative,
+      title: 'Delete Game?',
+      message: 'Do you want to delete "${match.name}"?',
+      confirmLabel: 'Delete',
+      confirmColor: AppColors.negative,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       await games.deleteGame(match.gameId);
     }
   }

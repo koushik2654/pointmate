@@ -58,6 +58,7 @@ class GameSession {
     required this.icon,
     required this.status,
     required this.players,
+    required this.createdAt,
   });
 
   final String id;
@@ -65,4 +66,5 @@ class GameSession {
   final IconData icon;
   final GameStatus status;
   final List<PlayerScore> players;
+  final DateTime createdAt;
 }

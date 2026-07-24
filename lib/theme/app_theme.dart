@@ -22,6 +22,7 @@ class AppColors {
 
   static const Color inputBorder = Color(0xFFDDD7E6);
   static const Color negative = Color(0xFFE0524C);
+  static const Color positive = Color(0xFF3F9E5C);
   static const Color statusInProgressBg = Color(0xFFFBDEDD);
   static const Color statusInProgressFg = Color(0xFFD9534F);
   static const Color statusPausedBg = Color(0xFFE7E4EC);

@@ -3,16 +3,29 @@ import 'package:flutter/material.dart';
 import '../models/game_session.dart';
 import '../theme/app_theme.dart';
 
-/// A single active/paused/awaiting-turn game card, matching the Home mockup.
+/// A single active game card, matching the Home mockup: name + created-at
+/// in place of a redundant "in progress" chip (every card in this list is
+/// in progress by definition), its top 2 players by score, and a quick
+/// See More / Finish action row.
 class GameSessionCard extends StatelessWidget {
-  const GameSessionCard({super.key, required this.session, this.onTap, this.onDelete});
+  const GameSessionCard({
+    super.key,
+    required this.session,
+    this.onTap,
+    this.onDelete,
+    this.onFinish,
+  });
 
   final GameSession session;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
+  final VoidCallback? onFinish;
 
   @override
   Widget build(BuildContext context) {
+    final topPlayers = [...session.players]
+      ..sort((a, b) => b.score.compareTo(a.score));
+
     return Material(
       color: AppColors.cardMuted,
       borderRadius: BorderRadius.circular(20),
@@ -25,59 +38,98 @@ class GameSessionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _StatusChip(status: session.status),
-                  Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(session.icon, size: 18, color: AppColors.primary),
-                      ),
-                      if (onDelete != null) ...[
-                        const SizedBox(width: 8),
-                        InkWell(
-                          onTap: onDelete,
-                          customBorder: const CircleBorder(),
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.delete_outline_rounded,
-                              size: 18,
-                              color: AppColors.negative,
-                            ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          session.name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
                           ),
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatCreatedAt(session.createdAt),
+                          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                        ),
                       ],
-                    ],
+                    ),
                   ),
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(session.icon, size: 18, color: AppColors.primary),
+                  ),
+                  if (onDelete != null) ...[
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: onDelete,
+                      customBorder: const CircleBorder(),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          size: 18,
+                          color: AppColors.negative,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 12),
-              Text(
-                session.name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ...session.players.map(
+              ...topPlayers.take(2).map(
                 (player) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: _PlayerRow(player: player),
                 ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: onTap,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('See More', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                  if (onFinish != null)
+                    OutlinedButton(
+                      onPressed: onFinish,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primaryLight),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        minimumSize: const Size(0, 32),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text(
+                        'Finish',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
@@ -87,41 +139,16 @@ class GameSessionCard extends StatelessWidget {
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
+const _kMonthAbbreviations = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
 
-  final GameStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    final (Color bg, Color fg) = switch (status) {
-      GameStatus.inProgress => (
-          AppColors.statusInProgressBg,
-          AppColors.statusInProgressFg,
-        ),
-      GameStatus.paused => (AppColors.statusPausedBg, AppColors.statusPausedFg),
-      GameStatus.yourTurn => (
-          AppColors.statusYourTurnBg,
-          AppColors.statusYourTurnFg,
-        ),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(status.icon, size: 14, color: fg),
-          const SizedBox(width: 4),
-          Text(
-            status.label,
-            style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
+String _formatCreatedAt(DateTime createdAt) {
+  final hour12 = createdAt.hour % 12 == 0 ? 12 : createdAt.hour % 12;
+  final period = createdAt.hour >= 12 ? 'PM' : 'AM';
+  final minute = createdAt.minute.toString().padLeft(2, '0');
+  return '${createdAt.day} ${_kMonthAbbreviations[createdAt.month - 1]} · $hour12:$minute $period';
 }
 
 class _PlayerRow extends StatelessWidget {

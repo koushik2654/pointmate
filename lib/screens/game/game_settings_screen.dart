@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/models/participant_entry.dart';
-import '../../data/models/round_multiplier.dart';
 import '../../data/models/winning_condition.dart';
+import '../../providers/game_match_provider.dart';
 import '../../providers/game_settings_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/app_form_dialog.dart';
 
 class GameSettingsScreen extends StatelessWidget {
   const GameSettingsScreen({super.key});
@@ -193,23 +194,12 @@ class _ScoringCard extends StatelessWidget {
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _RowLabel(icon: Icons.close_rounded, label: 'Round Multiplier'),
-              const SizedBox(height: 10),
-              _DropdownField<RoundMultiplier>(
-                value: settings.roundMultiplier,
-                items: RoundMultiplier.values,
-                labelBuilder: (c) => c.label,
-                onChanged: (value) {
-                  if (value != null) provider.setRoundMultiplier(value);
-                },
-              ),
-            ],
-          ),
+        _ToggleRow(
+          icon: Icons.palette_outlined,
+          title: 'Invert Total Colors',
+          subtitle: 'Swap the green/red highlight for highest and lowest totals',
+          value: settings.invertScoreColors,
+          onChanged: provider.setInvertScoreColors,
         ),
       ],
     );
@@ -339,6 +329,7 @@ class _ParticipantsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<GameSettingsProvider>();
+    final matchProvider = context.watch<GameMatchProvider>();
     final participants = provider.settings.participants;
 
     return Column(
@@ -355,7 +346,10 @@ class _ParticipantsSection extends StatelessWidget {
                 if (i > 0) const Divider(height: 1, color: AppColors.inputBorder),
                 _ParticipantRow(
                   participant: participants[i],
-                  onRemove: () => provider.removeParticipant(participants[i].id),
+                  onRemove: () {
+                    provider.removeParticipant(participants[i].id);
+                    matchProvider.removePlayer(participants[i].id);
+                  },
                 ),
               ],
             ],
@@ -363,7 +357,7 @@ class _ParticipantsSection extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         OutlinedButton.icon(
-          onPressed: () => _showAddParticipantDialog(context, provider),
+          onPressed: () => _showAddParticipantDialog(context, provider, matchProvider),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.primary,
             minimumSize: const Size.fromHeight(52),
@@ -380,31 +374,32 @@ class _ParticipantsSection extends StatelessWidget {
   Future<void> _showAddParticipantDialog(
     BuildContext context,
     GameSettingsProvider provider,
+    GameMatchProvider matchProvider,
   ) async {
     final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Player'),
+      builder: (context) => AppFormDialog(
+        title: 'Add Player',
         content: TextField(
           controller: controller,
           autofocus: true,
           decoration: const InputDecoration(hintText: 'Player name'),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Add'),
-          ),
-        ],
+        onCancel: () => Navigator.of(context).pop(),
+        onConfirm: () => Navigator.of(context).pop(controller.text),
+        confirmLabel: 'Add',
       ),
     );
     if (name != null && name.trim().isNotEmpty) {
-      await provider.addParticipant(name);
+      const avatarColorValue = 0xFFD9D3E3;
+      final id = '${DateTime.now().microsecondsSinceEpoch}';
+      await provider.addParticipant(name, id: id, avatarColorValue: avatarColorValue);
+      await matchProvider.addPlayer(
+        id: id,
+        name: name.trim(),
+        avatarColorValue: avatarColorValue,
+      );
     }
   }
 }

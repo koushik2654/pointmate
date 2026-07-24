@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../data/models/game_match.dart';
 import '../data/models/game_settings.dart';
+import '../data/models/match_player.dart';
 import '../data/models/winning_condition.dart';
 import '../models/game_session.dart';
 
@@ -79,6 +80,50 @@ class GamesProvider extends ChangeNotifier {
     return entries;
   }
 
+  /// Every game [name] has played at least one round of, most recent first
+  /// — active or finished — with their score and whether they won it under
+  /// that game's own [WinningCondition].
+  List<PlayerGameEntry> gamesForPlayer(String name) {
+    final entries = <PlayerGameEntry>[];
+
+    for (final match in _matchBox.values) {
+      if (match.currentRound == 0 || match.players.isEmpty) continue;
+
+      MatchPlayer? player;
+      for (final p in match.players) {
+        if (p.name == name) {
+          player = p;
+          break;
+        }
+      }
+      if (player == null) continue;
+
+      final winningCondition =
+          _settingsBox.get(match.gameId)?.winningCondition ??
+          WinningCondition.highestScoreWins;
+      final totals = [for (final p in match.players) p.total];
+      final winningTotal = winningCondition == WinningCondition.lowestScoreWins
+          ? totals.reduce((a, b) => a < b ? a : b)
+          : totals.reduce((a, b) => a > b ? a : b);
+
+      entries.add(
+        PlayerGameEntry(
+          gameId: match.gameId,
+          gameName: match.name,
+          createdAt: match.createdAt,
+          isFinished: match.isFinished,
+          roundsPlayed: match.currentRound,
+          playerCount: match.players.length,
+          score: player.total,
+          isWinner: player.total == winningTotal,
+        ),
+      );
+    }
+
+    entries.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return entries;
+  }
+
   /// Every unfinished game, sourced directly from persistence so it's
   /// reachable from Home no matter how the player got here.
   List<GameSession> get activeGames => [
@@ -89,6 +134,16 @@ class GamesProvider extends ChangeNotifier {
   /// Every game marked finished via [GameMatchProvider.finishGame].
   List<GameMatch> get finishedGames =>
       _matchBox.values.where((match) => match.isFinished).toList();
+
+  /// Marks a game finished directly from its Home screen card, without
+  /// opening its dashboard.
+  Future<void> finishGame(String id) async {
+    final match = _matchBox.get(id);
+    if (match == null) return;
+    match.isFinished = true;
+    await _matchBox.put(id, match);
+    notifyListeners();
+  }
 
   /// Deletes a game's persisted settings/match records, if any.
   Future<void> deleteGame(String id) async {
@@ -107,6 +162,7 @@ class GamesProvider extends ChangeNotifier {
       name: match.name,
       icon: _iconForCategory(_settingsBox.get(match.gameId)?.category),
       status: GameStatus.inProgress,
+      createdAt: match.createdAt,
       players: [
         for (final player in match.players)
           PlayerScore(
@@ -159,4 +215,28 @@ class LeaderboardEntry {
   final Color avatarColor;
 
   String get initial => name.isNotEmpty ? name[0].toUpperCase() : '?';
+}
+
+/// One game a player has taken part in, as shown on their games-played list.
+@immutable
+class PlayerGameEntry {
+  const PlayerGameEntry({
+    required this.gameId,
+    required this.gameName,
+    required this.createdAt,
+    required this.isFinished,
+    required this.roundsPlayed,
+    required this.playerCount,
+    required this.score,
+    required this.isWinner,
+  });
+
+  final String gameId;
+  final String gameName;
+  final DateTime createdAt;
+  final bool isFinished;
+  final int roundsPlayed;
+  final int playerCount;
+  final int score;
+  final bool isWinner;
 }

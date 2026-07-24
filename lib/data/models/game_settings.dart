@@ -1,7 +1,6 @@
 import 'package:hive/hive.dart';
 
 import 'participant_entry.dart';
-import 'round_multiplier.dart';
 import 'winning_condition.dart';
 
 part 'game_settings.g.dart';
@@ -15,9 +14,9 @@ class GameSettings extends HiveObject {
     required this.allowNegativeScores,
     required this.enableTimer,
     required this.targetScore,
-    required this.roundMultiplier,
     required this.participants,
     this.category,
+    this.invertScoreColors = false,
   });
 
   @HiveField(0)
@@ -35,9 +34,6 @@ class GameSettings extends HiveObject {
   @HiveField(4)
   int targetScore;
 
-  @HiveField(5)
-  RoundMultiplier roundMultiplier;
-
   @HiveField(6)
   List<ParticipantEntry> participants;
 
@@ -47,6 +43,12 @@ class GameSettings extends HiveObject {
   @HiveField(7)
   String? category;
 
+  /// Flips which extreme (highest/lowest total) is highlighted green vs red
+  /// on the scoreboard's Total row. Default follows [winningCondition]: the
+  /// winning extreme is green. Some players prefer it the other way round.
+  @HiveField(8)
+  bool invertScoreColors;
+
   factory GameSettings.defaults(String gameId) {
     return GameSettings(
       gameId: gameId,
@@ -54,7 +56,6 @@ class GameSettings extends HiveObject {
       allowNegativeScores: true,
       enableTimer: false,
       targetScore: 500,
-      roundMultiplier: RoundMultiplier.x1,
       participants: [],
     );
   }
